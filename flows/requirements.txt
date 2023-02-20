@@ -1,0 +1,7 @@
+wget
+fastparquet
+pandas==1.5.2
+prefect==2.7.7
+psycopg2-binary==2.9.5
+sqlalchemy==1.4.46
+prefect-sqlalchemy 
