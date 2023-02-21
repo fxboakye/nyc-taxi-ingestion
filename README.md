@@ -30,4 +30,4 @@ The Dockerized Data Pipeline performs the following tasks:
 
 ### Next Steps
 
-Will Utilize dbt core as an ELT process to carry out additional transformation on the dataset before visualization
+Will utilize dbt core as an ELT process to carry out additional transformation on the dataset before visualization
