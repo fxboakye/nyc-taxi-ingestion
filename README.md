@@ -26,7 +26,7 @@ The Dockerized Data Pipeline performs the following tasks:
 * In summary, the script automates the process of creating tables, inserting data, and verifying whether data already exists in the database. It uses efficient methods to minimize computation time and maximize efficiency.
 
 
-#### Regarding this project, I've chosen to use the New York Taxi dataset for the year 2022, specifically from January to November.
+##### Regarding this project, I've chosen to use the New York Taxi dataset for the year 2022, specifically from January to November.
 
 ### Next Steps
 
