@@ -13,113 +13,21 @@ The Dockerized Data Pipeline performs the following tasks:
 5. A container running pgAdmin is set up to carry out additional data cleaning using SQL commands.
 
 
-## Nyc Data pipeline with Docker Compose
 
-This repository contains everything needed to run Prefect Orion, a Python ingestion script, Postgres database and pgadmin using Docker Compose. 
+### Ingestion Script Workflow 
+* [Python Script](https://github.com/fxboakye/nyc-taxi-ingestion/blob/master/flows/pg_ingestion.py)
 
+* The script takes three parameters, which are taxi color, month, and year. Once the parameters are set, the script establishes a connection to the database and checks for any existing tables. If the required table does not exist, the script creates a new table based on the specified parameters. The table name is constructed as {color}_{year}_tripdata, such as green_2022_tripdata.
 
+* Using the parameters, the script constructs a URL to the required New York Taxi dataset and creates a DataFrame from the data obtained from the URL. The script applies some data transformation and inserts the resulting data into the table. If the required table already exists, the script checks the table to verify if the dataset is not already in the table before calling the extraction and transformation process. This helps to avoid unnecessary computations and saves time.
 
-### Setting up Postgres and Pgadmin Containers
-There are 2 directories in this repository.
+* Moreover, if new parameters are provided, the script checks the database to ensure that the specified dataset does not already exist in the database. The script only performs data extraction and transformation from the URL if the data does not already exist in the database. This approach saves computing time for data sets obtained from the URL.
 
-The nyc-taxi directory contains the `docker-compose.yml` file required to run the following services:
-* `database` - Postgres database for the taxi data.
-* `pgadmin` - Provides UI to interact with the database.
-* `prefect orion server` - Provides UI to view data ingestion workflow.
-* `cli` which runs the ingestion script.
-
-The directory also contains a subfolder "flows" which houses the following:
-* `ingestion.py` which contains the python script for ingestion.
-* `docker-entrypoint.sh` which contains the required command line prompts to run the script
-* `requirements.txt` which contains the python modules required for a successful ingestion.
+* In summary, the script automates the process of creating tables, inserting data, and verifying whether data already exists in the database. It uses efficient methods to minimize computation time and maximize efficiency.
 
 
-To run the PostgreSQL and pgadmin UI, I opened a terminal to run:
+##### Regarding this project, I've chosen to use the New York Taxi dataset for the year 2022, specifically from January to November.
 
-```
-docker compose --profiles pgdatabase --profiles pgadmin up
-```
+### Next Steps
 
-This will start PostgreSQL and pgadmin.
-
-```
-postgres-pgadmin-container-pgdatabase-1  | 2023-02-03 02:10:18.373 UTC [1] LOG:  database system is ready to accept connections
-```
-
-Navigating to the pgadmin instance at `http://localhost:5050/`
-
-Created a server and filled the required inputs
-<p align="center">
-  <img src="images/img1.png" width="600" title="hover text">
-</p>
-
-Afterwards queried database to count tables:
-```sql 
-select count(*)
-from information_schema.tables
-where table_schema = 'public';
-
-```
-<p align="center">
-  <img src="images/pgn.png" width="600" title="hover text">
-</p>
-No table in database.
-
-### Setting up Prefect Orion server
-
-To run the prefect server:
-
-Initializing the orion database profile. The orion server depends on this database to store flows, logs etc:
-
-```
-docker-compose --profile oriondb up
-```
-Afterwards
-```
-docker-compose --profile orion up
-```
-
-Then navigated to `http://localhost:4200/` to view the workflow ui.
-Currently has no flows, as no script has been run.
-
-<p align="center">
-  <img src="images/pr1.png" width="600" title="hover text">
-</p>
-
-
-### Executing the ingestion script
-To execute the ingestion script:
-
-```
-docker-compose run cli
-```
-This will install all the required modules and execute the `ingestion.py` script.
-<p align="center">
-  <img src="images/cmd1.png" width="600" title="hover text">
-</p>
-
-Once the ingestion is complete, refreshed the prefect UI which now  shows workflow including successful tasks.
-
-<p align="center">
-  <img src="images/pr2.png" width="600" title="hover text">
-   <img src="images/pr4.png" width="600" title="hover text">
-  <img src="images/pr3.png" width="600" title="hover text">
-</p>
-
-Back to pgadmin to verify:
-```sql 
-select *
-from information_schema.tables
-where table_schema = 'public'
-limit 10;
-
-```
-
-<p align="center">
-  <img src="images/pg-n1.png" width="600" title="hover text">
-</p>
-
-Data is now ready for more transformation in SQL.
-Plan to use DBT for transformation
-
-
+Will utilize dbt core as an ELT process to carry out additional transformation on the dataset before visualization
