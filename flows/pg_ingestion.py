@@ -8,7 +8,7 @@ from time import time
 import calendar
 from prefect import flow, task
 from datetime import datetime
-from secret import postgres_credentials
+import os
 
 @task()
 def extract(color:str, year:int, month:int) -> pd.DataFrame:
@@ -62,7 +62,7 @@ def transform_data(data:pd.DataFrame,year:int, month:int) -> pd.DataFrame:
         #for yellow datasets
         data.rename(columns={"tpep_pickup_datetime":"pickup_datetime","tpep_dropoff_datetime":"dropoff_datetime"}, inplace=True)
     except:
-        print("Columns don't exist")
+        pass
 
     print(data.dtypes)
 
@@ -92,10 +92,10 @@ def transform_data(data:pd.DataFrame,year:int, month:int) -> pd.DataFrame:
 def pg_connection():
     """Sets up connection to Postgres Database."""
     #Postgres Credentials
-    user=postgres_credentials.user
-    pwd=postgres_credentials.password
-    host=postgres_credentials.host
-    db=postgres_credentials.database
+    user=os.environ["POSTGRES_USER"]
+    pwd=os.environ["POSTGRES_PASSWORD"]
+    host=os.environ["POSTGRES_HOST"]
+    db=os.environ["POSTGRES_DB"]
 
     #Creates connection
     engine=create_engine(f'postgresql://{user}:{pwd}@{host}:{5432}/{db}')
@@ -122,7 +122,6 @@ def ingest_data(color:str, year:int, month:int) -> None:
     #checks for tables in database
     query=conn.execute(text("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'public'"))
     table_in_db=[row for row in query]
-    print(table_in_db)
     #checks if table exists before extracting and transforming data. Minimizes compute power.
     if (table_name,) not in table_in_db:
             raw_data=extract(color,year,month)             
@@ -140,8 +139,6 @@ def ingest_data(color:str, year:int, month:int) -> None:
             #Returns list containing distinct months in dataset in the form (month,)
             result=conn.execute(text(f"SELECT DISTINCT EXTRACT(MONTH FROM PICKUP_DATETIME) FROM {table_name}"))
             months_in_db=[row for row in result]
-            print(months_in_db)
-            print((float(month),))
             #Only appends data if the specified data month doesn't exist in the table
             if (float(month),) not in months_in_db:
                 print(f"Inserting data for {calendar.month_name[month]}, {year}")

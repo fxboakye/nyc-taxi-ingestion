@@ -1,6 +1,7 @@
 #!/bin/bash
-
-# install dependencies
+#upgrades pip
+pip install --upgrade pip
+#installs required modules
 echo "Installing required modules..."
 pip install -r requirements.txt
 

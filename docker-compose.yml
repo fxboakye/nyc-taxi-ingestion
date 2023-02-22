@@ -4,11 +4,11 @@ services:
     container_name: pgdatabase_container
     image: postgres:13
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
-      - POSTGRES_DB=ny_taxi
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - "./ny_taxi:/var/lib/postgresql/data:rw"
+      - ny_db:/var/lib/postgresql/data
     ports:
       - "5432:5432" 
     profiles: ["pgdatabase"]
@@ -19,52 +19,42 @@ services:
     image: dpage/pgadmin4
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: root
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5050:80"  
     profiles: ["pgadmin"]
 
-  ### Prefect Database
-  database:
-    image: postgres
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=orion
-    expose:
-      - 5432
-    volumes: 
-      - db:/var/lib/postgresql/data
-    profiles: ["oriondb"]
-
   ### Prefect Orion API
   orion:
+    container_name: orion
     image: prefecthq/prefect:2.7.7-python3.11
     volumes:
       - prefect:/root/.prefect
     entrypoint: ["prefect", "orion", "start"]
     environment:
-      - PREFECT_API_URL=http://host.docker.internal:4200/api
+      - PREFECT_API_URL=${PREFECT_API_URL}
       - PREFECT_ORION_API_HOST=0.0.0.0
-      - PREFECT_ORION_DATABASE_CONNECTION_URL=postgresql+asyncpg://postgres:postgres@database:5432/orion
     ports:
       - 4200:4200
-    depends_on:
-      - database
     profiles: ["orion"]
 
   ### Prefect CLI
   cli:
+    container_name: cli
     image: prefecthq/prefect:2.7.7-python3.11
     entrypoint: ./docker-entrypoint.sh
     working_dir: "/root/flows"
     volumes:
       - "./flows:/root/flows"
     environment:
-      - PREFECT_API_URL=http://orion:4200/api
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - PREFECT_API_URL=${PREFECT_API_URL}
     profiles: ["cli"]
       
 volumes:
   prefect:
-  db:
+  ny_db:
